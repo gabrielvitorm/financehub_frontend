@@ -1,129 +1,88 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+// src/components/Login.tsx
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
+import { Usuario } from '../types';
 
-const Login = () => {
-  const navigate = useNavigate();
-  const [emailUsuario, setEmailUsuario] = useState('');
-  const [senhaUsuario, setSenhaUsuario] = useState('');
-  const [showRecovery, setShowRecovery] = useState(false);
-  const [cpf, setCpf] = useState('');
+const Login: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [novaSenha, setNovaSenha] = useState('');
+  const [senha, setSenha] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  useEffect(() => {
+    // Se já estiver autenticado, redireciona na carga
+    if (localStorage.getItem('authenticated') === 'true') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:8080/api/usuarios/login', {
-        emailUsuario,
-        senhaUsuario,
-      });
+      // 1) login
+      await api.post('/usuarios/login', { emailUsuario: email, senhaUsuario: senha });
 
-      // Salvar e-mail no localStorage
-      localStorage.setItem('emailUsuario', emailUsuario);
+      // 2) busca ID do usuário
+      const userRes = await api.get<Usuario>(`/usuarios/emails/${email}`);
+      const idUsuario = userRes.data.idUsuario;
 
-      // Redirecionar para o Dashboard
-      navigate('/dashboard');
-    } catch (error) {
-      alert('Email ou senha incorretos!');
-    }
-  };
+      // 3) grava flag e ID
+      localStorage.setItem('authenticated', 'true');
+      localStorage.setItem('userId', String(idUsuario));
 
-  const handlePasswordRecovery = async () => {
-    try {
-      await axios.patch('http://localhost:8080/api/usuarios/atualizar-senha-email-cpf', {
-        emailUsuario: email,
-        cpfUsuario: cpf,
-        novaSenha,
-      });
-      alert('Senha atualizada com sucesso!');
-      setShowRecovery(false);
-      setCpf('');
-      setEmail('');
-      setNovaSenha('');
-    } catch (error) {
-      alert('Erro ao recuperar senha.');
+-     // 4) redireciona via React Router
+-     navigate('/dashboard', { replace: true });
++     // 4) redireciona forçando recarga para atualizar App.tsx
++     navigate('/dashboard', { replace: true });
++     window.location.reload();
+    } catch {
+      setError('E-mail ou senha inválidos');
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form onSubmit={handleLogin} className="bg-white p-8 rounded shadow-md w-96">
-        <h1 className="text-3xl font-extrabold text-center text-blue-700 mb-2">Finance Hub</h1>
-        <h2 className="text-xl font-semibold mb-6 text-center">Login</h2>
-
-        <input
-          type="email"
-          placeholder="Email"
-          value={emailUsuario}
-          onChange={(e) => setEmailUsuario(e.target.value)}
-          className="w-full p-2 mb-4 border rounded"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Senha"
-          value={senhaUsuario}
-          onChange={(e) => setSenhaUsuario(e.target.value)}
-          className="w-full p-2 mb-4 border rounded"
-          required
-        />
-        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
-          Entrar
-        </button>
-
-        <button
-          type="button"
-          className="block mt-4 text-sm text-gray-600 hover:underline w-full text-center"
-          onClick={() => setShowRecovery(!showRecovery)}
-        >
-          Esqueceu a senha?
-        </button>
-
-        <div className="mt-4 text-sm text-center">
-          <span>Não tem uma conta? </span>
-          <Link to="/cadastro" className="text-blue-600 hover:underline">
-            Cadastre-se
-          </Link>
-        </div>
-
-        {showRecovery && (
-          <div className="mt-6 border-t pt-4">
-            <h3 className="text-md font-semibold text-center mb-2">Recuperar Senha</h3>
-            <input
-              type="text"
-              placeholder="CPF"
-              value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
-              className="w-full p-2 mb-2 border rounded"
-              required
-            />
+      <div className="w-full max-w-md bg-white p-8 rounded shadow">
+        <h2 className="text-2xl font-bold mb-6 text-center">Entrar</h2>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block mb-1">E-mail</label>
             <input
               type="email"
-              placeholder="Email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 mb-2 border rounded"
+              onChange={e => setEmail(e.target.value)}
+              className="w-full border p-2 rounded"
               required
             />
+          </div>
+          <div>
+            <label className="block mb-1">Senha</label>
             <input
               type="password"
-              placeholder="Nova Senha"
-              value={novaSenha}
-              onChange={(e) => setNovaSenha(e.target.value)}
-              className="w-full p-2 mb-2 border rounded"
+              value={senha}
+              onChange={e => setSenha(e.target.value)}
+              className="w-full border p-2 rounded"
               required
             />
-            <button
-              type="button"
-              onClick={handlePasswordRecovery}
-              className="w-full bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600"
-            >
-              Recuperar Senha
-            </button>
           </div>
-        )}
-      </form>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          >
+            Entrar
+          </button>
+        </form>
+        <div className="flex justify-between mt-4 text-sm">
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Criar conta
+          </Link>
+          <Link to="/recover" className="text-blue-600 hover:underline">
+            Recuperar senha
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };
