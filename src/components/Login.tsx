@@ -1,40 +1,37 @@
 // src/components/Login.tsx
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import React, { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { api } from '../services/api'
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [email, setEmail] = useState('')
+  const [senha, setSenha] = useState('')
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
 
-  // Se já tiver token, redireciona direto
+  // se já tiver token, redireciona automaticamente
   useEffect(() => {
     if (localStorage.getItem('token')) {
-      navigate('/dashboard', { replace: true });
+      navigate('/dashboard', { replace: true })
     }
-  }, [navigate]);
+  }, [navigate])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError('')
+    console.log('▶️ handleSubmit chamado', { email, senha })  // <--- veja no console
     try {
-      // 1) Faz login
-      const res = await api.post('/auth/login', { email, senha });
-
-      // 2) Armazena o token e marca como autenticado
-      const token = res.data.token as string;
-      localStorage.setItem('token', token);
-      localStorage.setItem('authenticated', 'true');
-
-      // 3) Redireciona para dashboard
-      navigate('/dashboard', { replace: true });
-    } catch {
-      setError('E-mail ou senha inválidos');
+      const res = await api.post('/auth/login', { email, senha })
+      console.log('✅ resposta do login', res.data)             // <--- e aqui
+      const token = res.data.token as string
+      localStorage.setItem('token', token)
+      localStorage.setItem('authenticated', 'true')
+      navigate('/dashboard', { replace: true })
+    } catch (err) {
+      console.error('❌ erro no login', err)
+      setError('E-mail ou senha inválidos')
     }
-  };
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -43,21 +40,25 @@ const Login: React.FC = () => {
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1">E-mail</label>
+            <label htmlFor="email" className="block mb-1">E-mail</label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
+              placeholder="seu@email.com"
               className="w-full border p-2 rounded"
               required
             />
           </div>
           <div>
-            <label className="block mb-1">Senha</label>
+            <label htmlFor="senha" className="block mb-1">Senha</label>
             <input
+              id="senha"
               type="password"
               value={senha}
               onChange={e => setSenha(e.target.value)}
+              placeholder="••••••••"
               className="w-full border p-2 rounded"
               required
             />
@@ -79,7 +80,7 @@ const Login: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
