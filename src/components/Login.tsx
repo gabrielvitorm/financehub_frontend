@@ -1,6 +1,6 @@
 // src/components/Login.tsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
 const Login: React.FC = () => {
@@ -9,36 +9,30 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Se já tiver token, já redireciona
   useEffect(() => {
-    if (localStorage.getItem('token')) {
+    if (localStorage.getItem('authenticated') === 'true') {
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
     try {
-      // 1) Chama o endpoint de login do back-end
+      // 1) chama o endpoint correto
       const res = await api.post('/auth/login', {
-        email: email,
-        senha: senha
+        email,
+        senha
       });
 
-      // 2) Armazena o token retornado
-      const token = res.data.token as string;
+      // 2) grava token e flag
+      const token = res.data.token;
       localStorage.setItem('token', token);
-
-      // 3) Marca como autenticado (opcional)
       localStorage.setItem('authenticated', 'true');
 
-      // 4) Redireciona para Dashboard
+      // 3) recarrega para o switch de rotas enxergar o navbar
       navigate('/dashboard', { replace: true });
-
-    } catch (err) {
-      console.error(err);
+      window.location.reload();
+    } catch {
       setError('E-mail ou senha inválidos');
     }
   };
@@ -76,14 +70,6 @@ const Login: React.FC = () => {
             Entrar
           </button>
         </form>
-        <div className="flex justify-between mt-4 text-sm">
-          <Link to="/register" className="text-blue-600 hover:underline">
-            Criar conta
-          </Link>
-          <Link to="/recover" className="text-blue-600 hover:underline">
-            Recuperar senha
-          </Link>
-        </div>
       </div>
     </div>
   );
