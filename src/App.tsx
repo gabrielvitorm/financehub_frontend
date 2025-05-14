@@ -13,9 +13,10 @@ import BudgetList from './components/BudgetList';
 import BudgetForm from './components/BudgetForm';
 import ExportPDF from './components/ExportPDF';
 import Profile from './components/Profile';
+import { PrivateRoute } from './components/PrivateRoute';
 
 const App: React.FC = () => {
-  const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+  const isAuthenticated = !!localStorage.getItem('token');
 
   return (
     <Router>
@@ -59,80 +60,19 @@ const App: React.FC = () => {
           />
 
           {/* Private routes */}
-          <Route
-            path="/dashboard"
-            element={
-              isAuthenticated
-                ? <Dashboard />
-                : <Navigate to="/login" replace />
-            }
-          />
-          <Route
-            path="/transactions"
-            element={
-              isAuthenticated
-                ? <TransactionList />
-                : <Navigate to="/login" replace />
-            }
-          />
-          <Route
-            path="/transactions/new"
-            element={
-              isAuthenticated
-                ? <TransactionForm />
-                : <Navigate to="/login" replace />
-            }
-          />
-          <Route
-            path="/transactions/edit/:id"
-            element={
-              isAuthenticated
-                ? <TransactionForm />
-                : <Navigate to="/login" replace />
-            }
-          />
-          <Route
-            path="/budgets"
-            element={
-              isAuthenticated
-                ? <BudgetList />
-                : <Navigate to="/login" replace />
-            }
-          />
-          <Route
-            path="/budgets/new"
-            element={
-              isAuthenticated
-                ? <BudgetForm />
-                : <Navigate to="/login" replace />
-            }
-          />
-          <Route
-            path="/budgets/edit/:id"
-            element={
-              isAuthenticated
-                ? <BudgetForm />
-                : <Navigate to="/login" replace />
-            }
-          />
-          <Route
-            path="/export"
-            element={
-              isAuthenticated
-                ? <ExportPDF />
-                : <Navigate to="/login" replace />
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              isAuthenticated
-                ? <Profile />
-                : <Navigate to="/login" replace />
-            }
-          />
+          <Route element={<PrivateRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/transactions" element={<TransactionList />} />
+            <Route path="/transactions/new" element={<TransactionForm />} />
+            <Route path="/transactions/edit/:id" element={<TransactionForm />} />
+            <Route path="/budgets" element={<BudgetList />} />
+            <Route path="/budgets/new" element={<BudgetForm />} />
+            <Route path="/budgets/edit/:id" element={<BudgetForm />} />
+            <Route path="/export" element={<ExportPDF />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
 
-          {/* Catch-all: redirect based on auth */}
+          {/* Catch-all */}
           <Route
             path="*"
             element={

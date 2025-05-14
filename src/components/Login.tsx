@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Usuario } from '../types';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,33 +9,36 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Se já tiver token, já redireciona
   useEffect(() => {
-    // Se já estiver autenticado, redireciona na carga
-    if (localStorage.getItem('authenticated') === 'true') {
+    if (localStorage.getItem('token')) {
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
     try {
-      // 1) login
-      await api.post('/usuarios/login', { emailUsuario: email, senhaUsuario: senha });
+      // 1) Chama o endpoint de login do back-end
+      const res = await api.post('/auth/login', {
+        email: email,
+        senha: senha
+      });
 
-      // 2) busca ID do usuário
-      const userRes = await api.get<Usuario>(`/usuarios/emails/${email}`);
-      const idUsuario = userRes.data.idUsuario;
+      // 2) Armazena o token retornado
+      const token = res.data.token as string;
+      localStorage.setItem('token', token);
 
-      // 3) grava flag e ID
+      // 3) Marca como autenticado (opcional)
       localStorage.setItem('authenticated', 'true');
-      localStorage.setItem('userId', String(idUsuario));
 
--     // 4) redireciona via React Router
--     navigate('/dashboard', { replace: true });
-+     // 4) redireciona forçando recarga para atualizar App.tsx
-+     navigate('/dashboard', { replace: true });
-+     window.location.reload();
-    } catch {
+      // 4) Redireciona para Dashboard
+      navigate('/dashboard', { replace: true });
+
+    } catch (err) {
+      console.error(err);
       setError('E-mail ou senha inválidos');
     }
   };
