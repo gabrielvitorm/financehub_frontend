@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "type":"module",
   "scripts": {
+    "prebuild": "ls -R .",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
