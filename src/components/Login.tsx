@@ -1,6 +1,6 @@
 // src/components/Login.tsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 
 const Login: React.FC = () => {
@@ -9,29 +9,28 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Se já tiver token, redireciona direto
   useEffect(() => {
-    if (localStorage.getItem('authenticated') === 'true') {
+    if (localStorage.getItem('token')) {
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      // 1) chama o endpoint correto
-      const res = await api.post('/auth/login', {
-        email,
-        senha
-      });
+    setError('');
 
-      // 2) grava token e flag
-      const token = res.data.token;
+    try {
+      // 1) Faz login
+      const res = await api.post('/auth/login', { email, senha });
+
+      // 2) Armazena o token e marca como autenticado
+      const token = res.data.token as string;
       localStorage.setItem('token', token);
       localStorage.setItem('authenticated', 'true');
 
-      // 3) recarrega para o switch de rotas enxergar o navbar
+      // 3) Redireciona para dashboard
       navigate('/dashboard', { replace: true });
-      window.location.reload();
     } catch {
       setError('E-mail ou senha inválidos');
     }
@@ -70,6 +69,14 @@ const Login: React.FC = () => {
             Entrar
           </button>
         </form>
+        <div className="flex justify-between mt-4 text-sm">
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Criar conta
+          </Link>
+          <Link to="/recover" className="text-blue-600 hover:underline">
+            Recuperar senha
+          </Link>
+        </div>
       </div>
     </div>
   );
